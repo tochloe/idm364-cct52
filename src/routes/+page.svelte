@@ -44,6 +44,11 @@
             ? products 
             : products.filter(p => p.category === selectedCategory)
     );
+
+    import shoe_pic from '$lib/img/section_img/shoes.jpg';
+
+    import jackets_pic from '$lib/img/section_img/jackets.jpg';
+
 </script>
 
 
@@ -73,7 +78,7 @@
 <section class="categories container">
     <div class="category-grid">
         <button class="category-card" onclick={() => filterCategory('shoes')}>
-            <img src="https://images.unsplash.com/photo-1759735548218-47e187c67e4f" alt="Shoes">
+            <img src={shoe_pic} alt="Shoes">
             <div class="category-info">
                 <h3>Shoes</h3>
                 <p>Footwear that can keep up</p>
@@ -87,7 +92,7 @@
             </div>
         </button>
         <button class="category-card" onclick={() => filterCategory('jackets')}>
-            <img src="https://images.unsplash.com/photo-1763581199749-ccd157a62c1e" alt="Jackets">
+            <img src={jackets_pic} alt="Jackets">
             <div class="category-info">
                 <h3>Jackets</h3>
                 <p>Stay warm. Stay Stylish.</p>
