@@ -1,5 +1,8 @@
+<!--HOME-->
+
 <script>
-    import { supabase } from "../lib/supabase.js";
+    import { goto } from '$app/navigation';
+    import { supabase } from "$lib/supabase.js";
 
     let products = $state([]);
     let selectedCategory = $state('all');
@@ -8,9 +11,14 @@
     let cart = $state([]);
     
     // Load products on mount using $effect
-    $effect(() => {
-        supabase.from("product_name").select("*").then(({ data }) => {
-            if (data) products = data;
+   $effect(() => {
+        supabase.from("all-products").select("*").then(({ data, error }) => {
+            if (error) {
+                console.error('Error loading products:', error);
+            } else if (data) {
+                products = data;
+            }
+            loading = false;
         });
     });
     
@@ -28,6 +36,10 @@
     
     function closeModal() {
         modalOpen = false;
+    }
+
+       function navigateToProducts(category) {
+        goto(`/products?filter=${category}`);
     }
     
     // Filter products by category
@@ -47,12 +59,11 @@
 
     import shoe_pic from '$lib/img/section_img/shoes.jpg';
 
+    import bags_pic from '$lib/img/section_img/bags.jpg';
+
     import jackets_pic from '$lib/img/section_img/jackets.jpg';
 
 </script>
-
-
-<h1 class="logo">HELP</h1>
 
 <header class="header">
     <div class="container">
@@ -85,7 +96,7 @@
             </div>
         </button>
         <button class="category-card" onclick={() => filterCategory('bags')}>
-            <img src="https://images.unsplash.com/photo-1599711862405-c7068b48ee32" alt="Bags">
+            <img src={bags_pic} alt="Bags">
             <div class="category-info">
                 <h3>Bags</h3>
                 <p>Carry what you need in style</p>
@@ -108,13 +119,14 @@
     </div>
 
     <!-- Category Filter -->
-    <div class="filter-buttons">
-        <button class="filter-btn" class:active={selectedCategory === 'all'} onclick={() => filterCategory('all')}>All Products</button>
-        <button class="filter-btn" class:active={selectedCategory === 'shoes'} onclick={() => filterCategory('shoes')}>Shoes</button>
-        <button class="filter-btn" class:active={selectedCategory === 'bags'} onclick={() => filterCategory('bags')}>Bags</button>
-        <button class="filter-btn" class:active={selectedCategory === 'jackets'} onclick={() => filterCategory('jackets')}>Jackets</button>
-        <button class="filter-btn" class:active={selectedCategory === 'accessories'} onclick={() => filterCategory('accessories')}>Accessories</button>
-    </div>
+   <div class="filter-buttons">
+    <button class="filter-btn" onclick={() => navigateToProducts('all')}>All Products</button>
+    <button class="filter-btn" onclick={() => navigateToProducts('shoes')}>Shoes</button>
+    <button class="filter-btn" onclick={() => navigateToProducts('bags')}>Bags</button>
+    <button class="filter-btn" onclick={() => navigateToProducts('jackets')}>Jackets</button>
+    <button class="filter-btn" onclick={() => navigateToProducts('accessories')}>Accessories</button>
+</div>
+
 
     <!-- Product Grid -->
     <div id="product-grid" class="product-grid">
@@ -134,7 +146,7 @@
     <div class="cta-content">
         <h2>Shop all re:treat</h2>
         <p>Explore our full collection of premium outdoor gear and lifestyle products</p>
-        <button class="btn btn-secondary">View All Products →</button>
+        <button class="btn btn-secondary" onclick={() => navigateToProducts('all')}>View All Products →</button>
     </div>
 </section>
 
