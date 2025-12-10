@@ -2,21 +2,28 @@
 
 <script>
     import { goto } from '$app/navigation';
-    import { supabase } from "$lib/supabase.js";
+    import { supabase } from "$lib/supabase";
+    import ProductGrid from '$lib/components/ProductGrid.svelte';
+
+    let {data} = $props(); 
+    $inspect(data);
 
     let products = $state([]);
+    let loading = $state(true);
     let selectedCategory = $state('all');
     let cartDrawerOpen = $state(false);
     let modalOpen = $state(false);
     let cart = $state([]);
     
     // Load products on mount using $effect
-   $effect(() => {
-        supabase.from("all-products").select("*").then(({ data, error }) => {
+    $effect(() => {
+        loading = true;
+        supabase.from("allproducts").select("*").then(({ data, error }) => {
             if (error) {
                 console.error('Error loading products:', error);
             } else if (data) {
                 products = data;
+                console.log('Loaded products:', data); // Debug
             }
             loading = false;
         });
@@ -24,10 +31,6 @@
     
     function toggleCart() {
         cartDrawerOpen = !cartDrawerOpen;
-    }
-    
-    function openCart() {
-        cartDrawerOpen = true;
     }
     
     function closeCart() {
@@ -38,11 +41,11 @@
         modalOpen = false;
     }
 
-       function navigateToProducts(category) {
-        goto(`/products?filter=${category}`);
+    function navigateToProducts(category) {
+        goto(`/product?filter=${category}`);  
     }
     
-    // Filter products by category
+    // Filter products by category on home page
     function filterCategory(category) {
         selectedCategory = category;
     }
@@ -54,55 +57,56 @@
     let filteredProducts = $derived(
         selectedCategory === 'all' 
             ? products 
-            : products.filter(p => p.category === selectedCategory)
+            : products.filter(p => {
+                // Check both category and categories fields
+                if (p.category) return p.category === selectedCategory;
+                if (p.categories && Array.isArray(p.categories)) {
+                    return p.categories.includes(selectedCategory);
+                }
+                return false;
+            })
     );
 
     import shoe_pic from '$lib/img/section_img/shoes.jpg';
-
     import bags_pic from '$lib/img/section_img/bags.jpg';
-
     import jackets_pic from '$lib/img/section_img/jackets.jpg';
-
 </script>
 
+<!-- Keep your header the same -->
 <header class="header">
     <div class="container">
         <div class="logo">re:treat</div>
-        <nav class="nav">
-            <a href="#shoes">Shoes</a>
-            <a href="#bags">Bags</a>
-            <a href="#jackets">Jackets</a>
-            <a href="#accessories">Accessories</a>
-        </nav>
         <button class="cart-btn" onclick={toggleCart}>🛒 Cart (<span>{cartCount}</span>)</button>
     </div>
 </header>
 
+<!-- Keep your hero section the same -->
 <section class="hero">
     <div class="hero-content">
         <h1>Gear Up for Adventure</h1>
         <p>Premium outdoor equipment for every journey</p>
-        <button class="btn btn-primary">Shop Now</button>
+        <button class="btn btn-primary" onclick={() => navigateToProducts('all')}>Shop Now</button>
     </div>
 </section>
 
+<!-- Keep your categories section the same -->
 <section class="categories container">
     <div class="category-grid">
-        <button class="category-card" onclick={() => filterCategory('shoes')}>
+        <button class="category-card" onclick={() => navigateToProducts('shoes')}>
             <img src={shoe_pic} alt="Shoes">
             <div class="category-info">
                 <h3>Shoes</h3>
                 <p>Footwear that can keep up</p>
             </div>
         </button>
-        <button class="category-card" onclick={() => filterCategory('bags')}>
+        <button class="category-card" onclick={() => navigateToProducts('bags')}>
             <img src={bags_pic} alt="Bags">
             <div class="category-info">
                 <h3>Bags</h3>
                 <p>Carry what you need in style</p>
             </div>
         </button>
-        <button class="category-card" onclick={() => filterCategory('jackets')}>
+        <button class="category-card" onclick={() => navigateToProducts('jackets')}>
             <img src={jackets_pic} alt="Jackets">
             <div class="category-info">
                 <h3>Jackets</h3>
@@ -112,36 +116,66 @@
     </div>
 </section>
 
+<!-- Updated Products Section with Component -->
 <section class="products container">
     <div class="section-header">
         <h2>re:STOCK</h2>
         <p>shop our new drops</p>
     </div>
 
-    <!-- Category Filter -->
-   <div class="filter-buttons">
-    <button class="filter-btn" onclick={() => navigateToProducts('all')}>All Products</button>
-    <button class="filter-btn" onclick={() => navigateToProducts('shoes')}>Shoes</button>
-    <button class="filter-btn" onclick={() => navigateToProducts('bags')}>Bags</button>
-    <button class="filter-btn" onclick={() => navigateToProducts('jackets')}>Jackets</button>
-    <button class="filter-btn" onclick={() => navigateToProducts('accessories')}>Accessories</button>
-</div>
-
-
-    <!-- Product Grid -->
-    <div id="product-grid" class="product-grid">
-        {#each filteredProducts as product}
-            <div class="product-card">
-                <img src={product.image} class="product-image" alt={product.title} />
-                <div class="product-info">
-                    <div class="product-title">{product.title}</div>
-                    <div class="product-price">${product.price}</div>
-                </div>
-            </div>
-        {/each}
+    <!-- Category Filter Buttons -->
+    <div class="filter-buttons">
+        <button 
+            class="filter-btn" 
+            class:active={selectedCategory === 'all'}
+            onclick={() => filterCategory('all')}
+        >
+            All Products
+        </button>
+        <button 
+            class="filter-btn" 
+            class:active={selectedCategory === 'shoes'}
+            onclick={() => filterCategory('shoes')}
+        >
+            Shoes
+        </button>
+        <button 
+            class="filter-btn" 
+            class:active={selectedCategory === 'bags'}
+            onclick={() => filterCategory('bags')}
+        >
+            Bags
+        </button>
+        <button 
+            class="filter-btn" 
+            class:active={selectedCategory === 'jackets'}
+            onclick={() => filterCategory('jackets')}
+        >
+            Jackets
+        </button>
+        <button 
+            class="filter-btn" 
+            class:active={selectedCategory === 'accessories'}
+            onclick={() => filterCategory('accessories')}
+        >
+            Accessories
+        </button>
     </div>
+
+    <!-- Use the ProductGrid Component -->
+    <ProductGrid products={filteredProducts} {loading} />
+    
+    <!-- View All Button -->
+    {#if filteredProducts.length > 0}
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick={() => navigateToProducts(selectedCategory)}>
+                View All {selectedCategory === 'all' ? 'Products' : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} →
+            </button>
+        </div>
+    {/if}
 </section>
 
+<!-- Keep your CTA, footer, cart drawer, and overlay the same -->
 <section class="cta container">
     <div class="cta-content">
         <h2>Shop all re:treat</h2>
@@ -173,7 +207,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 re:treat. All rights reserved.</p>
+            <p>&copy; 2025 re:treat. idm364-cct52.</p>
         </div>
     </div>
 </footer>

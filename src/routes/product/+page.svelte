@@ -2,7 +2,7 @@
 
 <script>
     import { page } from '$app/stores';
-    import { supabase } from '$lib/supabase.js';
+    import { supabase } from '$lib/supabase';
 
     let products = $state([]);
     let selectedFilters = $state([]);
@@ -10,6 +10,14 @@
     let sortBy = $state('featured');
     let cart = $state([]);
     let loading = $state(true);
+
+    let pageTitle = $derived(
+        selectedFilters.length === 0 
+            ? 'All Products' 
+            : selectedFilters
+                .map(f => filterOptions.find(opt => opt.value === f)?.label)
+                .join(' & ')
+    );
 
     // Initialize filters from URL parameter
     $effect(() => {
@@ -23,7 +31,7 @@
 
     // Load products from Supabase
     $effect(() => {
-        supabase.from("all-products").select("*").then(({ data, error }) => {
+        supabase.from("allproducts").select("*").then(({ data, error }) => {
             if (error) {
                 console.error('Error loading products:', error);
             } else if (data) {
@@ -101,10 +109,7 @@
 <header class="header">
     <div class="container">
         <a href="/" class="logo">re:treat</a>
-        <nav class="nav">
-            <a href="/">Home</a>
-            <a href="/products">Shop</a>
-        </nav>
+       
         <button class="cart-btn" onclick={toggleCart}>
             🛒 Cart (<span>{cartCount}</span>)
         </button>
@@ -114,9 +119,9 @@
 <div class="main-content container">
     <!-- Page Header -->
     <div class="page-header">
-        <h1>Shop All Products</h1>
-        <p>{filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found</p>
-    </div>
+    <h1>Shop {pageTitle}</h1>
+    <p>{filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found</p>
+</div>
 
     <div class="content-grid">
         <!-- Sidebar Filters -->
@@ -147,7 +152,7 @@
             <!-- Active Filters -->
             {#if selectedFilters.length > 0}
                 <div class="active-filters">
-                    <h4>ACTIVE FILTERS</h4>
+                    <h4>SELECTED:</h4>
                     <div class="filter-tags">
                         {#each selectedFilters as filter}
                             {@const filterLabel = filterOptions.find(f => f.value === filter)?.label}
@@ -284,6 +289,7 @@ body {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--primary);
+    text-decoration: none;
 }
 
 .nav {
