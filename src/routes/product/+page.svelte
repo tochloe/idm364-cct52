@@ -1,6 +1,7 @@
 <script>
     import { page } from '$app/stores';
     import { supabase } from '$lib/supabase';
+    import ProductGrid from '$lib/components/ProductGrid.svelte';
     import '../../app.css';
 
     let products = $state([]);
@@ -38,9 +39,6 @@
             } else if (data) {
                 products = data;
                 console.log('Products loaded:', data);
-                if (data.length > 0) {
-                    console.log('First product image path:', data[0].product_1);
-                }
             }
             loading = false;
         });
@@ -73,19 +71,9 @@
         cartDrawerOpen = false;
     }
 
-   // COMPLETE function with all cases handled
-function getProductImage(product) {
-    const imagePath = product.product_1 || product.hero_img;
-    if (!imagePath) return '/placeholder.jpg';
-    
-    // If the path already starts with /img/, use it as-is
-    if (imagePath.startsWith('/img/')) {
-        return imagePath;
-    }
-}
-
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
 
+    // Filter products based on selected filters
     let filteredProducts = $derived(
         selectedFilters.length === 0
             ? products
@@ -101,6 +89,7 @@ function getProductImage(product) {
             })
     );
 
+    // Sort the filtered products
     let sortedProducts = $derived(
         [...filteredProducts].sort((a, b) => {
             switch(sortBy) {
@@ -120,7 +109,6 @@ function getProductImage(product) {
 <header class="header">
     <div class="container">
         <a href="/" class="logo">re:treat</a>
-       
         <button class="cart-btn" onclick={toggleCart}>
             Cart (<span>{cartCount}</span>)
         </button>
@@ -128,10 +116,9 @@ function getProductImage(product) {
 </header>
 
 <div class="main-content container">
-    <!-- Page Header -->
     <div class="page-header">
         <h1>Shop {pageTitle}</h1>
-        <p>{filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found</p>
+        <p>{sortedProducts.length} {sortedProducts.length === 1 ? 'product' : 'products'} found</p>
     </div>
 
     <div class="content-grid">
@@ -146,7 +133,6 @@ function getProductImage(product) {
                 {/if}
             </div>
 
-            <!-- Filter Checkboxes -->
             <div class="filter-checkboxes">
                 {#each filterOptions as filter}
                     <label class="filter-checkbox" class:active={selectedFilters.includes(filter.value)}>
@@ -160,7 +146,6 @@ function getProductImage(product) {
                 {/each}
             </div>
 
-            <!-- Active Filters -->
             {#if selectedFilters.length > 0}
                 <div class="active-filters">
                     <h4>SELECTED:</h4>
@@ -177,9 +162,8 @@ function getProductImage(product) {
             {/if}
         </aside>
 
-        <!-- Products Section -->
+        <!-- Products Section with ProductGrid Component -->
         <div class="products-section">
-            <!-- Sort Options -->
             <div class="sort-section">
                 <select bind:value={sortBy} class="sort-select">
                     <option value="featured">Featured</option>
@@ -189,12 +173,8 @@ function getProductImage(product) {
                 </select>
             </div>
 
-            <!-- Product Grid -->
-            {#if loading}
-                <div class="loading">
-                    <p>Loading products...</p>
-                </div>
-            {:else if sortedProducts.length === 0}
+            <!-- Use ProductGrid Component - it handles loading, empty states, and display -->
+            {#if sortedProducts.length === 0 && !loading}
                 <div class="no-results">
                     <h3>No products found</h3>
                     <p>Try adjusting your filters to see more results</p>
@@ -203,43 +183,7 @@ function getProductImage(product) {
                     </button>
                 </div>
             {:else}
-                <div class="product-grid">
-                    {#each sortedProducts as product (product.id)}
-                        <div class="product-card">
-                            <img 
-                                 src={getProductImage(product)}
-                                 alt={product.product_name || 'Product'} 
-                                 class="product-image"
-                            />
-                            <div class="product-info">
-                                <div class="product-title">{product.product_name || 'Unnamed Product'}</div>
-                                <div class="product-price">
-                                    ${product.product_price ? Number(product.product_price).toFixed(2) : '0.00'}
-                                </div>
-                                
-                                {#if product.category || product.product_filters}
-                                    <div class="category-tags">
-                                        {#if product.category}
-                                            <span class="category-tag">
-                                                {filterOptions.find(f => f.value === product.category)?.label || product.category}
-                                            </span>
-                                        {:else if product.product_filters}
-                                            {#each product.product_filters.split(',').slice(0, 2) as filterTag}
-                                                <span class="category-tag">
-                                                    {filterTag.trim()}
-                                                </span>
-                                            {/each}
-                                        {/if}
-                                    </div>
-                                {/if}
-                                
-                                <button class="add-to-cart-btn">
-                                    Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                    {/each}
-                </div>
+                <ProductGrid products={sortedProducts} {loading} />
             {/if}
         </div>
     </div>
@@ -256,10 +200,10 @@ function getProductImage(product) {
     </div>
 </div>
 
-<!-- Cart Overlay -->
 {#if cartDrawerOpen}
     <div class="cart-overlay" onclick={closeCart}></div>
 {/if}
+
 
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=K2D:wght@700&display=swap');

@@ -14,33 +14,26 @@
     let modalOpen = $state(false);
     let cart = $state([]);
     
-    // Carousel state - only need current slide now
+    // Carousel state
     let currentSlide = $state(0);
     
-    // Import your hero images
     import hero1 from '$lib/img/header/slide1.jpg';
     import hero2 from '$lib/img/header/slide2.jpg';
     import hero3 from '$lib/img/header/slide3.jpg';
     
-    // Array of hero images
     const heroImages = [hero1, hero2, hero3];
     
-    // Auto-advance carousel
     $effect(() => {
         const interval = setInterval(() => {
             currentSlide = (currentSlide + 1) % heroImages.length;
-        }, 5000); // Change slide every 5 seconds
-        
-        // Cleanup function
+        }, 5000);
         return () => clearInterval(interval);
     });
     
-    // Optional: Allow clicking dots to change slides
     function goToSlide(index) {
         currentSlide = index;
     }
     
-    // Load products on mount using $effect
     $effect(() => {
         loading = true;
         supabase.from("allproducts").select("*").then(({ data, error }) => {
@@ -76,16 +69,23 @@
     
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
     
+    // Filter products based on selected category
     let filteredProducts = $derived(
         selectedCategory === 'all' 
             ? products 
             : products.filter(p => {
                 if (p.category) return p.category === selectedCategory;
-                if (p.categories && Array.isArray(p.categories)) {
-                    return p.categories.includes(selectedCategory);
+                if (p.product_filters) {
+                    const filters = p.product_filters.toLowerCase().split(',').map(f => f.trim());
+                    return filters.includes(selectedCategory);
                 }
                 return false;
             })
+    );
+
+    // NEW: Limit to first 2 products for preview
+    let previewProducts = $derived(
+        filteredProducts.slice(0, 2)
     );
 
     import shoe_pic from '$lib/img/section_img/shoes.jpg';
@@ -211,12 +211,20 @@
         </button>
     </div>
 
-    <ProductGrid products={filteredProducts} {loading} />
+    <!-- Use previewProducts to show only 2 items -->
+    <ProductGrid products={previewProducts} {loading} />
     
-    {#if filteredProducts.length > 0}
+    <!-- Show "View All" button if there are more than 2 products -->
+    {#if filteredProducts.length > 2}
         <div style="text-align: center; margin-top: 2rem;">
             <button class="btn btn-secondary" onclick={() => navigateToProducts(selectedCategory)}>
-                View All {selectedCategory === 'all' ? 'Products' : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} →
+                View All {filteredProducts.length} {selectedCategory === 'all' ? 'Products' : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} →
+            </button>
+        </div>
+    {:else if filteredProducts.length > 0}
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick={() => navigateToProducts(selectedCategory)}>
+                View {selectedCategory === 'all' ? 'All Products' : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} →
             </button>
         </div>
     {/if}
