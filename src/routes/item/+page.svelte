@@ -773,7 +773,11 @@
     .product-header {
         flex-direction: column;
     }
-    
+
+    .product-header h1 {
+        font-size: 1.5rem;
+    }
+
     .product-price {
         align-self: flex-start;
     }
@@ -789,8 +793,5 @@
         flex-direction: column;
     }
     
-    .product-header h1 {
-        font-size: 2rem;
-    }
 }
 </style>
