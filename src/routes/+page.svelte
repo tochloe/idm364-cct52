@@ -263,29 +263,7 @@
 
 <footer class="footer">
     <div class="container">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>re:treat</h4>
-                <p>Premium outdoor gear for adventurers</p>
-            </div>
-            <div class="footer-section">
-                <h4>Shop</h4>
-                <a href="#shoes">Shoes</a>
-                <a href="#Backpacks">Backpacks</a>
-                <a href="#jackets">Jackets</a>
-                <a href="#accessories">Accessories</a>
-            </div>
-            <div class="footer-section">
-                <h4>Company</h4>
-                <a href="#about">About</a>
-                <a href="#contact">Contact</a>
-                <a href="#shipping">Shipping</a>
-                <a href="#returns">Returns</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 re:treat. idm364-cct52.</p>
-        </div>
+        <p>re:treat 2025 | IDM341_CCT52</p>
     </div>
 </footer>
 
@@ -746,38 +724,12 @@ body {
 .footer {
     background: #2a2a2a;
     color: var(--white);
-    padding: 3rem 0 1rem;
-}
-
-.footer-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-.footer-section h4 {
-    margin-bottom: 1rem;
-}
-
-.footer-section a {
-    display: block;
-    color: rgba(255,255,255,0.7);
-    text-decoration: none;
-    margin-bottom: 0.5rem;
-    transition: color 0.3s;
-}
-
-.footer-section a:hover {
-    color: var(--white);
-}
-
-.footer-bottom {
+    padding: 2rem 0;
+    margin-top: 5rem;
     text-align: center;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.5);
 }
+
+
 
 /* Cart Drawer */
 .cart-drawer {
