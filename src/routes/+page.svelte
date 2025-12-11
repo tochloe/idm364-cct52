@@ -14,7 +14,15 @@
     let modalOpen = $state(false);
     let cart = $state([]);
     
-    // Carousel state
+    // Load cart from localStorage on mount
+    $effect(() => {
+        const savedCart = localStorage.getItem('retreat_cart');
+        if (savedCart) {
+            cart = JSON.parse(savedCart);
+        }
+    });
+    
+    // Carousel
     let currentSlide = $state(0);
     
     import hero1 from '$lib/img/header/slide1.jpg';
@@ -67,9 +75,26 @@
         selectedCategory = category;
     }
     
-    let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
+    function updateQuantity(itemId, delta) {
+        const index = cart.findIndex(item => item.id === itemId);
+        if (index > -1) {
+            cart[index].quantity += delta;
+            if (cart[index].quantity <= 0) {
+                cart = cart.filter(item => item.id !== itemId);
+            }
+            localStorage.setItem('retreat_cart', JSON.stringify(cart));
+        }
+    }
     
-    // Filter products based on selected category
+    function removeFromCart(itemId) {
+        cart = cart.filter(item => item.id !== itemId);
+        localStorage.setItem('retreat_cart', JSON.stringify(cart));
+    }
+    
+    let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
+    let cartTotal = $derived(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+    
+    // Filter
     let filteredProducts = $derived(
         selectedCategory === 'all' 
             ? products 
@@ -83,7 +108,6 @@
             })
     );
 
-    // NEW: Limit to first 2 products for preview
     let previewProducts = $derived(
         filteredProducts.slice(0, 2)
     );
@@ -93,7 +117,7 @@
     import jackets_pic from '$lib/img/section_img/jackets.jpg';
 </script>
 
-<!-- Header stays the same -->
+
 <header class="header">
     <div class="container">
         <a href="/" class="logo">re:treat</a>
@@ -104,7 +128,7 @@
     </div>
 </header>
 
-<!-- Clean Auto-Animating Hero Section -->
+
 <section class="hero">
     <!-- Carousel Background -->
     <div class="hero-carousel">
@@ -117,7 +141,7 @@
         {/each}
     </div>
     
-    <!-- Overlay for better text readability -->
+
     <div class="hero-overlay"></div>
     
     <!-- Content -->
@@ -126,8 +150,7 @@
         <p>re:set. re:wear. re:treat.</p>
         <button class="btn btn-primary" onclick={() => navigateToProducts('all')}>Shop Now</button>
     </div>
-    
-    <!-- Dots Indicator (optional - you can remove this too if you want) -->
+
     <div class="carousel-dots">
         {#each heroImages as _, i}
             <button 
@@ -140,7 +163,7 @@
     </div>
 </section>
 
-<!-- Rest of your page ... -->
+
 <section class="categories container">
     <div class="category-grid">
         <button class="category-card" onclick={() => navigateToProducts('shoes')}>
@@ -272,19 +295,37 @@
         <button class="close-btn" onclick={closeCart}>✕</button>
     </div>
     <div id="cart-items" class="cart-items">
-        <!-- Cart items will be inserted here -->
+        {#if cart.length === 0}
+            <p class="empty-cart">Your cart is empty</p>
+        {:else}
+            {#each cart as item}
+                <div class="cart-item">
+                    <img src={item.image} alt={item.name}>
+                    <div class="cart-item-info">
+                        <h4>{item.name}</h4>
+                        <p class="cart-item-price">${item.price.toFixed(2)}</p>
+                        <div class="quantity-controls">
+                            <button onclick={() => updateQuantity(item.id, -1)}>−</button>
+                            <span>{item.quantity}</span>
+                            <button onclick={() => updateQuantity(item.id, 1)}>+</button>
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick={() => removeFromCart(item.id)}>✕</button>
+                </div>
+            {/each}
+        {/if}
     </div>
     <div class="cart-footer">
         <div class="cart-total">
             <span>Total:</span>
-            <span id="cart-total">$0.00</span>
+            <span id="cart-total">${cartTotal.toFixed(2)}</span>
         </div>
-        <button class="btn btn-primary btn-full">Checkout</button>
+        <button class="btn btn-primary btn-full" disabled={cart.length === 0}>Checkout</button>
     </div>
 </div>
 
 {#if cartDrawerOpen}
-    <div id="cart-overlay" class="cart-overlay visible"></div>
+    <div id="cart-overlay" class="cart-overlay visible" onclick={closeCart}></div>
 {/if}
 
 {#if modalOpen}
@@ -292,14 +333,14 @@
         <div class="modal-content">
             <button class="close-btn" onclick={closeModal}>✕</button>
             <div id="modal-body">
-                <!-- Product details will be inserted here -->
+                <!-- OPEN PRODUCT DETAILS -->
             </div>
         </div>
     </div>
 {/if}
 
 <style>
-/* Your existing global styles */
+
 * {
     margin: 0;
     padding: 0;
@@ -471,6 +512,84 @@ body {
     border-radius: 6px;
 }
 
+/**CART*/
+
+.empty-cart {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 3rem 1rem;
+}
+
+.cart-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.cart-item img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.cart-item-info {
+    flex: 1;
+}
+
+.cart-item-info h4 {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.cart-item-price {
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.quantity-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.quantity-controls button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.quantity-controls button:hover {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.remove-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    width: 24px;
+    height: 24px;
+}
+
+.remove-btn:hover {
+    color: red;
+}
 /* Buttons */
 .btn {
     padding: 0.75rem 2rem;

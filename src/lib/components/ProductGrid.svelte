@@ -1,80 +1,100 @@
 <script>
-    let { products = [], loading = false } = $props();
+    import { goto } from '$app/navigation';
+    
+    let { products, loading } = $props();
+    
+    function openProduct(productId) {
+        goto(`/item?id=${productId}`);
+    }
 </script>
 
-{#if loading}
-    <div class="loading">
-        <p>loading...</p>
-    </div>
-{:else if products.length === 0}
-    <div class="no-products">
-        <p>No products found</p>
-    </div>
-{:else}
-    <div class="product-grid">
-        {#each products as product (product.id)}
-            <div class="product-card">
+<div class="product-grid">
+    {#if loading}
+        <div class="loading">Loading products...</div>
+    {:else if products.length === 0}
+        <div class="no-products">No products found</div>
+    {:else}
+        {#each products as product}
+            <div class="product-card" onclick={() => openProduct(product.id)}>
                 <img 
                     src={product.product_1} 
-                    class="product-image" 
-                    alt={product.product_name || 'Product'} 
+                    alt={product.product_name}
+                    class="product-image"
                 />
                 <div class="product-info">
-                    <div class="product-title">{product.product_name || 'Unnamed Product'}</div>
-                    <div class="product-price">
-                        ${product.product_price ? Number(product.product_price).toFixed(2) : '0.00'}
+                    <h3 class="product-title">{product.product_name}</h3>
+                    <p class="product-price">${Number(product.product_price).toFixed(2)}</p>
+                    <div class="category-tags">
+                        {#each (product.product_filters?.split(',') || []) as filter}
+                            <span class="category-tag">{filter.trim()}</span>
+                        {/each}
                     </div>
                 </div>
             </div>
         {/each}
-    </div>
-{/if}
+    {/if}
+</div>
 
 <style>
-    .loading, .no-products {
-        text-align: center;
-        padding: 3rem;
-        color: #666666;
-    }
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
 
-    .product-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 2rem;
-    }
+.product-card {
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
 
-    .product-card {
-        background: #ffffff;
-        border-radius: 12px;
-        overflow: hidden;
-        transition: transform 0.3s, box-shadow 0.3s;
-        cursor: pointer;
-    }
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
 
-    .product-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    }
+.product-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
 
-    .product-image {
-        width: 100%;
-        height: 250px;
-        object-fit: cover;
-    }
+.product-info {
+    padding: 1rem;
+}
 
-    .product-info {
-        padding: 1rem;
-    }
+.product-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
 
-    .product-title {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #1a1a1a;
-    }
+.product-price {
+    color: var(--primary);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
 
-    .product-price {
-        color: #768e35;
-        font-size: 1.25rem;
-        font-weight: 700;
-    }
+.category-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.category-tag {
+    font-size: 0.75rem;
+    padding: 0.125rem 0.5rem;
+    background: #f0f4e8;
+    color: var(--primary);
+    border-radius: 12px;
+}
+
+.loading, .no-products {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
 </style>

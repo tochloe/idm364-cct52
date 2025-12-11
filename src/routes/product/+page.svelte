@@ -11,6 +11,14 @@
     let cart = $state([]);
     let loading = $state(true);
 
+    // Load cart from localStorage
+    $effect(() => {
+        const savedCart = localStorage.getItem('retreat_cart');
+        if (savedCart) {
+            cart = JSON.parse(savedCart);
+        }
+    });
+
     let pageTitle = $derived(
         selectedFilters.length === 0 
             ? 'All Products' 
@@ -71,7 +79,24 @@
         cartDrawerOpen = false;
     }
 
+    function updateQuantity(itemId, delta) {
+        const index = cart.findIndex(item => item.id === itemId);
+        if (index > -1) {
+            cart[index].quantity += delta;
+            if (cart[index].quantity <= 0) {
+                cart = cart.filter(item => item.id !== itemId);
+            }
+            localStorage.setItem('retreat_cart', JSON.stringify(cart));
+        }
+    }
+    
+    function removeFromCart(itemId) {
+        cart = cart.filter(item => item.id !== itemId);
+        localStorage.setItem('retreat_cart', JSON.stringify(cart));
+    }
+
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
+    let cartTotal = $derived(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0));
 
     // Filter products based on selected filters
     let filteredProducts = $derived(
@@ -196,7 +221,32 @@
         <button class="close-btn" onclick={closeCart}>✕</button>
     </div>
     <div class="cart-items">
-        <p style="text-align: center; color: #666666;">Your cart is empty</p>
+        {#if cart.length === 0}
+            <p class="empty-cart">Your cart is empty</p>
+        {:else}
+            {#each cart as item}
+                <div class="cart-item">
+                    <img src={item.image} alt={item.name}>
+                    <div class="cart-item-info">
+                        <h4>{item.name}</h4>
+                        <p class="cart-item-price">${item.price.toFixed(2)}</p>
+                        <div class="quantity-controls">
+                            <button onclick={() => updateQuantity(item.id, -1)}>−</button>
+                            <span>{item.quantity}</span>
+                            <button onclick={() => updateQuantity(item.id, 1)}>+</button>
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick={() => removeFromCart(item.id)}>✕</button>
+                </div>
+            {/each}
+        {/if}
+    </div>
+    <div class="cart-footer">
+        <div class="cart-total">
+            <span>Total:</span>
+            <span>${cartTotal.toFixed(2)}</span>
+        </div>
+        <button class="btn btn-primary btn-full" disabled={cart.length === 0}>Checkout</button>
     </div>
 </div>
 
@@ -468,79 +518,6 @@
     background: var(--primary-hover);
 }
 
-/* Product Grid */
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-
-.product-card {
-    background: var(--white);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-}
-
-.product-image {
-    width: 100%;
-    height: 250px;
-    object-fit: cover;
-    background: #f0f0f0;
-}
-
-.product-info {
-    padding: 1rem;
-}
-
-.product-title {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.product-price {
-    color: var(--primary);
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.category-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    margin-bottom: 0.75rem;
-}
-
-.category-tag {
-    font-size: 0.75rem;
-    padding: 0.125rem 0.5rem;
-    background: #f0f4e8;
-    color: var(--primary);
-    border-radius: 12px;
-}
-
-.add-to-cart-btn {
-    width: 100%;
-    padding: 0.5rem;
-    background: var(--primary);
-    color: var(--white);
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.add-to-cart-btn:hover {
-    background: var(--primary-hover);
-}
-
 /* Cart Drawer */
 .cart-drawer {
     position: fixed;
@@ -574,6 +551,96 @@
     padding: 1rem;
 }
 
+.empty-cart {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 3rem 1rem;
+}
+
+.cart-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.cart-item img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.cart-item-info {
+    flex: 1;
+}
+
+.cart-item-info h4 {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.cart-item-price {
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.quantity-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.quantity-controls button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.quantity-controls button:hover {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+.remove-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    width: 24px;
+    height: 24px;
+}
+
+.remove-btn:hover {
+    color: red;
+}
+
+.cart-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.cart-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
 .close-btn {
     background: none;
     border: none;
@@ -602,11 +669,6 @@
     .cart-drawer {
         width: 100%;
         right: -100%;
-    }
-    
-    .product-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 1rem;
     }
 }
 </style>
