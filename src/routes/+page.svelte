@@ -234,10 +234,9 @@
         </button>
     </div>
 
-    <!-- Use previewProducts to show only 2 items -->
     <ProductGrid products={previewProducts} {loading} />
     
-    <!-- Show "View All" button if there are more than 2 products -->
+    <!-- more than 2 items:-->
     {#if filteredProducts.length > 2}
         <div style="text-align: center; margin-top: 2rem;">
             <button class="btn btn-secondary" onclick={() => navigateToProducts(selectedCategory)}>
@@ -253,7 +252,7 @@
     {/if}
 </section>
 
-<section class="cta container">
+<section>
     <div class="cta-content">
         <h2>Shop all re:treat</h2>
         <p>Explore our full collection of premium outdoor gear and lifestyle products</p>
@@ -261,7 +260,7 @@
     </div>
 </section>
 
-<footer class="footer">
+<footer>
     <div class="container">
         <p>re:treat 2025 | IDM341_CCT52</p>
     </div>
@@ -721,14 +720,13 @@ body {
 }
 
 /* Footer */
-.footer {
+footer {
     background: #2a2a2a;
     color: var(--white);
     padding: 2rem 0;
     margin-top: 5rem;
     text-align: center;
 }
-
 
 
 /* Cart Drawer */

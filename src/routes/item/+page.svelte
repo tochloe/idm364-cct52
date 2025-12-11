@@ -543,26 +543,12 @@ body {
     cursor: not-allowed;
 }
 
-.btn-save {
-    background: var(--white);
-    color: var(--text);
-    border: 2px solid var(--border);
-}
-
-.btn-save.saved {
-    background: var(--primary);
-    color: var(--white);
-    border-color: var(--primary);
-}
-
-.btn-save:hover {
-    border-color: var(--primary);
-}
 
 .btn-full {
     width: 100%;
 }
 
+/*
 .product-details {
     padding-top: 2rem;
     border-top: 1px solid var(--border);
@@ -590,7 +576,9 @@ body {
     color: var(--primary);
     font-weight: bold;
     margin-right: 0.5rem;
-}
+} 
+
+*/
 
 /* Size Selection */
 .size-options {
