@@ -15,7 +15,7 @@
         {#each products as product (product.id)}
             <div class="product-card">
                 <img 
-                    src={product.product_1 || '/placeholder.jpg'} 
+                    src={product.product_1} 
                     class="product-image" 
                     alt={product.product_name || 'Product'} 
                 />

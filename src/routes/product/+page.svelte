@@ -1,8 +1,7 @@
-<!--Product Page-->
-
 <script>
     import { page } from '$app/stores';
     import { supabase } from '$lib/supabase';
+    import '../../app.css';
 
     let products = $state([]);
     let selectedFilters = $state([]);
@@ -22,6 +21,7 @@
     // Initialize filters from URL parameter
     $effect(() => {
         const filterParam = $page.url.searchParams.get('filter');
+        console.log('Filter from URL:', filterParam);
         if (filterParam && filterParam !== 'all') {
             selectedFilters = [filterParam];
         } else {
@@ -31,12 +31,16 @@
 
     // Load products from Supabase
     $effect(() => {
+        loading = true;
         supabase.from("allproducts").select("*").then(({ data, error }) => {
             if (error) {
                 console.error('Error loading products:', error);
             } else if (data) {
                 products = data;
-                console.log('Products loaded:', data); // Debug log
+                console.log('Products loaded:', data);
+                if (data.length > 0) {
+                    console.log('Sample product fields:', Object.keys(data[0]));
+                }
             }
             loading = false;
         });
@@ -45,11 +49,8 @@
     const filterOptions = [
         { value: 'shoes', label: 'Shoes' },
         { value: 'bags', label: 'Bags' },
-        { value: 'backpacks', label: 'Backpacks' },
         { value: 'jackets', label: 'Jackets' },
-        { value: 'sneakers', label: 'Sneakers' },
         { value: 'accessories', label: 'Accessories' },
-        { value: 'hats', label: 'Hats' },
     ];
 
     function toggleFilter(filterValue) {
@@ -72,33 +73,46 @@
         cartDrawerOpen = false;
     }
 
+    // Helper function to get image URL
+    function getProductImage(product) {
+      
+        const imagePath = product.product_1 || product.hero_img;
+        if (!imagePath) return '/placeholder.jpg';
+        
+        
+         return `../img/${imagePath}`;
+    }
+
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
 
+    // Filter products based on category field or product_filters field
     let filteredProducts = $derived(
         selectedFilters.length === 0
             ? products
             : products.filter(product => {
-                // Check if product has a categories array/field
-                if (product.categories && Array.isArray(product.categories)) {
-                    return selectedFilters.some(filter => product.categories.includes(filter));
-                }
-                // Fallback: check if product has a single 'category' field
+                // Try category field first
                 if (product.category) {
                     return selectedFilters.includes(product.category);
+                }
+                // Try product_filters field (if it's a comma-separated string)
+                if (product.product_filters) {
+                    const filters = product.product_filters.toLowerCase().split(',').map(f => f.trim());
+                    return selectedFilters.some(selected => filters.includes(selected));
                 }
                 return false;
             })
     );
 
+    // Sort products using correct field names
     let sortedProducts = $derived(
         [...filteredProducts].sort((a, b) => {
             switch(sortBy) {
                 case 'price-low':
-                    return a.price - b.price;
+                    return Number(a.product_price || 0) - Number(b.product_price || 0);
                 case 'price-high':
-                    return b.price - a.price;
+                    return Number(b.product_price || 0) - Number(a.product_price || 0);
                 case 'name':
-                    return a.title.localeCompare(b.title);
+                    return (a.product_name || '').localeCompare(b.product_name || '');
                 default:
                     return 0;
             }
@@ -111,7 +125,7 @@
         <a href="/" class="logo">re:treat</a>
        
         <button class="cart-btn" onclick={toggleCart}>
-            🛒 Cart (<span>{cartCount}</span>)
+            Cart (<span>{cartCount}</span>)
         </button>
     </div>
 </header>
@@ -119,9 +133,9 @@
 <div class="main-content container">
     <!-- Page Header -->
     <div class="page-header">
-    <h1>Shop {pageTitle}</h1>
-    <p>{filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found</p>
-</div>
+        <h1>Shop {pageTitle}</h1>
+        <p>{filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found</p>
+    </div>
 
     <div class="content-grid">
         <!-- Sidebar Filters -->
@@ -193,20 +207,32 @@
                 </div>
             {:else}
                 <div class="product-grid">
-                    {#each sortedProducts as product}
+                    {#each sortedProducts as product (product.id)}
                         <div class="product-card">
-                            <img src={product.image} alt={product.title} class="product-image" />
+                            <img 
+                                 src={getProductImage(product)}
+                                 alt={product.product_name || 'Product'} 
+                                 class="product-image"
+                            />
                             <div class="product-info">
-                                <div class="product-title">{product.title}</div>
-                                <div class="product-price">${Number(product.price).toFixed(2)}</div>
+                                <div class="product-title">{product.product_name || 'Unnamed Product'}</div>
+                                <div class="product-price">
+                                    ${product.product_price ? Number(product.product_price).toFixed(2) : '0.00'}
+                                </div>
                                 
-                                {#if product.categories || product.category}
+                                {#if product.category || product.product_filters}
                                     <div class="category-tags">
-                                        {#each (Array.isArray(product.categories) ? product.categories : [product.category]) as cat}
+                                        {#if product.category}
                                             <span class="category-tag">
-                                                {filterOptions.find(f => f.value === cat)?.label || cat}
+                                                {filterOptions.find(f => f.value === product.category)?.label || product.category}
                                             </span>
-                                        {/each}
+                                        {:else if product.product_filters}
+                                            {#each product.product_filters.split(',').slice(0, 2) as filterTag}
+                                                <span class="category-tag">
+                                                    {filterTag.trim()}
+                                                </span>
+                                            {/each}
+                                        {/if}
                                     </div>
                                 {/if}
                                 
@@ -239,6 +265,8 @@
 {/if}
 
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=K2D:wght@700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -253,13 +281,6 @@
     --text: #1a1a1a;
     --text-muted: #666666;
     --border: #e5e5e5;
-}
-
-body {
-    font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
 }
 
 .container {
@@ -290,22 +311,6 @@ body {
     font-weight: 700;
     color: var(--primary);
     text-decoration: none;
-}
-
-.nav {
-    display: flex;
-    gap: 2rem;
-}
-
-.nav a {
-    text-decoration: none;
-    color: var(--text);
-    font-weight: 500;
-    transition: color 0.3s;
-}
-
-.nav a:hover {
-    color: var(--primary);
 }
 
 .cart-btn {
@@ -545,6 +550,7 @@ body {
     width: 100%;
     height: 250px;
     object-fit: cover;
+    background: #f0f0f0;
 }
 
 .product-info {
@@ -644,10 +650,6 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .nav {
-        display: none;
-    }
-    
     .content-grid {
         grid-template-columns: 1fr;
     }

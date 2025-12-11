@@ -1,8 +1,7 @@
-<!--HOME-->
-
 <script>
     import { goto } from '$app/navigation';
     import { supabase } from "$lib/supabase";
+    import '../app.css';
     import ProductGrid from '$lib/components/ProductGrid.svelte';
 
     let {data} = $props(); 
@@ -15,6 +14,32 @@
     let modalOpen = $state(false);
     let cart = $state([]);
     
+    // Carousel state - only need current slide now
+    let currentSlide = $state(0);
+    
+    // Import your hero images
+    import hero1 from '$lib/img/header/slide1.jpg';
+    import hero2 from '$lib/img/header/slide2.jpg';
+    import hero3 from '$lib/img/header/slide3.jpg';
+    
+    // Array of hero images
+    const heroImages = [hero1, hero2, hero3];
+    
+    // Auto-advance carousel
+    $effect(() => {
+        const interval = setInterval(() => {
+            currentSlide = (currentSlide + 1) % heroImages.length;
+        }, 5000); // Change slide every 5 seconds
+        
+        // Cleanup function
+        return () => clearInterval(interval);
+    });
+    
+    // Optional: Allow clicking dots to change slides
+    function goToSlide(index) {
+        currentSlide = index;
+    }
+    
     // Load products on mount using $effect
     $effect(() => {
         loading = true;
@@ -23,7 +48,7 @@
                 console.error('Error loading products:', error);
             } else if (data) {
                 products = data;
-                console.log('Loaded products:', data); // Debug
+                console.log('Loaded products:', data);
             }
             loading = false;
         });
@@ -45,20 +70,16 @@
         goto(`/product?filter=${category}`);  
     }
     
-    // Filter products by category on home page
     function filterCategory(category) {
         selectedCategory = category;
     }
     
-    // Calculate cart item count using $derived
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
     
-    // Filter products based on selected category using $derived
     let filteredProducts = $derived(
         selectedCategory === 'all' 
             ? products 
             : products.filter(p => {
-                // Check both category and categories fields
                 if (p.category) return p.category === selectedCategory;
                 if (p.categories && Array.isArray(p.categories)) {
                     return p.categories.includes(selectedCategory);
@@ -72,24 +93,51 @@
     import jackets_pic from '$lib/img/section_img/jackets.jpg';
 </script>
 
-<!-- Keep your header the same -->
+<!-- Header stays the same -->
 <header class="header">
     <div class="container">
         <div class="logo">re:treat</div>
-        <button class="cart-btn" onclick={toggleCart}>🛒 Cart (<span>{cartCount}</span>)</button>
+        <button class="cart-btn" onclick={toggleCart}>Cart (<span>{cartCount}</span>)</button>
     </div>
 </header>
 
-<!-- Keep your hero section the same -->
+<!-- Clean Auto-Animating Hero Section -->
 <section class="hero">
+    <!-- Carousel Background -->
+    <div class="hero-carousel">
+        {#each heroImages as image, i}
+            <div 
+                class="hero-slide" 
+                class:active={currentSlide === i}
+                style="background-image: url({image})"
+            ></div>
+        {/each}
+    </div>
+    
+    <!-- Overlay for better text readability -->
+    <div class="hero-overlay"></div>
+    
+    <!-- Content -->
     <div class="hero-content">
         <h1>Gear Up for Adventure</h1>
         <p>Premium outdoor equipment for every journey</p>
         <button class="btn btn-primary" onclick={() => navigateToProducts('all')}>Shop Now</button>
     </div>
+    
+    <!-- Dots Indicator (optional - you can remove this too if you want) -->
+    <div class="carousel-dots">
+        {#each heroImages as _, i}
+            <button 
+                class="dot" 
+                class:active={currentSlide === i}
+                onclick={() => goToSlide(i)}
+                aria-label="Go to slide {i + 1}"
+            ></button>
+        {/each}
+    </div>
 </section>
 
-<!-- Keep your categories section the same -->
+<!-- Rest of your page ... -->
 <section class="categories container">
     <div class="category-grid">
         <button class="category-card" onclick={() => navigateToProducts('shoes')}>
@@ -116,14 +164,12 @@
     </div>
 </section>
 
-<!-- Updated Products Section with Component -->
 <section class="products container">
     <div class="section-header">
         <h2>re:STOCK</h2>
         <p>shop our new drops</p>
     </div>
 
-    <!-- Category Filter Buttons -->
     <div class="filter-buttons">
         <button 
             class="filter-btn" 
@@ -162,10 +208,8 @@
         </button>
     </div>
 
-    <!-- Use the ProductGrid Component -->
     <ProductGrid products={filteredProducts} {loading} />
     
-    <!-- View All Button -->
     {#if filteredProducts.length > 0}
         <div style="text-align: center; margin-top: 2rem;">
             <button class="btn btn-secondary" onclick={() => navigateToProducts(selectedCategory)}>
@@ -175,7 +219,6 @@
     {/if}
 </section>
 
-<!-- Keep your CTA, footer, cart drawer, and overlay the same -->
 <section class="cta container">
     <div class="cta-content">
         <h2>Shop all re:treat</h2>
@@ -212,7 +255,6 @@
     </div>
 </footer>
 
-<!-- Cart Drawer -->
 <div id="cart-drawer" class="cart-drawer" class:open={cartDrawerOpen}>
     <div class="cart-header">
         <h3>Shopping Cart</h3>
@@ -230,12 +272,10 @@
     </div>
 </div>
 
-<!-- Cart Overlay -->
 {#if cartDrawerOpen}
     <div id="cart-overlay" class="cart-overlay visible"></div>
 {/if}
 
-<!-- Product Modal -->
 {#if modalOpen}
     <div id="product-modal" class="modal open">
         <div class="modal-content">
@@ -248,6 +288,7 @@
 {/if}
 
 <style>
+/* Your existing global styles */
 * {
     margin: 0;
     padding: 0;
@@ -300,22 +341,6 @@ body {
     color: var(--primary);
 }
 
-.nav {
-    display: flex;
-    gap: 2rem;
-}
-
-.nav a {
-    text-decoration: none;
-    color: var(--text);
-    font-weight: 500;
-    transition: color 0.3s;
-}
-
-.nav a:hover {
-    color: var(--primary);
-}
-
 .cart-btn {
     background: var(--primary);
     color: var(--white);
@@ -331,24 +356,107 @@ body {
     background: var(--primary-hover);
 }
 
-/* Hero Section */
+/* Hero Section with Auto-Animating Carousel */
 .hero {
-    background: linear-gradient(135deg, var(--primary) 0%, #5f7229 100%);
-    color: var(--white);
-    padding: 6rem 2rem;
+    position: relative;
+    height: 600px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-carousel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
+}
+
+.hero-slide.active {
+    opacity: 1;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg, 
+        rgba(118, 142, 53, 0.7) 0%, 
+        rgba(95, 114, 41, 0.7) 100%
+    );
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
     text-align: center;
+    color: var(--white);
+    max-width: 800px;
+    padding: 2rem;
 }
 
 .hero-content h1 {
     font-family: 'K2D', sans-serif;
-    font-size: 3rem;
+    font-size: 3.5rem;
     margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .hero-content p {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     margin-bottom: 2rem;
-    opacity: 0.9;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Carousel Dots */
+.carousel-dots {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 0;
+}
+
+.dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: scale(1.2);
+}
+
+.dot.active {
+    background: white;
+    width: 30px;
+    border-radius: 6px;
 }
 
 /* Buttons */
@@ -478,73 +586,6 @@ body {
     border-color: var(--primary);
 }
 
-/* Product Grid */
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 2rem;
-}
-
-.product-card {
-    background: var(--white);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-}
-
-.product-image {
-    width: 100%;
-    height: 250px;
-    object-fit: cover;
-}
-
-.product-info {
-    padding: 1rem;
-}
-
-.product-title {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.product-price {
-    color: var(--primary);
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-}
-
-.product-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.product-actions button {
-    flex: 1;
-    padding: 0.5rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.add-to-cart-btn {
-    background: var(--primary);
-    color: var(--white);
-}
-
-.view-details-btn {
-    background: transparent;
-    border: 2px solid var(--primary) !important;
-    color: var(--primary);
-}
-
 /* CTA Section */
 .cta {
     padding: 5rem 0;
@@ -640,20 +681,6 @@ body {
     padding: 1rem;
 }
 
-.cart-item {
-    display: flex;
-    gap: 1rem;
-    padding: 1rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.cart-item-image {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 8px;
-}
-
 .cart-footer {
     padding: 1.5rem;
     border-top: 1px solid var(--border);
@@ -705,22 +732,25 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .nav {
-        display: none;
+    .hero {
+        height: 500px;
     }
     
     .hero-content h1 {
         font-size: 2rem;
     }
     
+    .hero-content p {
+        font-size: 1.1rem;
+    }
+    
+    .carousel-dots {
+        bottom: 1rem;
+    }
+    
     .cart-drawer {
         width: 100%;
         right: -100%;
-    }
-    
-    .product-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 1rem;
     }
 }
 </style>
