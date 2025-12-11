@@ -195,7 +195,7 @@
     <!-- Optional: visually hidden text (for localization or if you prefer explicit visible text for screen readers) -->
     <span class="sr-only">Go back</span>
 </button>
-// ...existing code...
+
         <div class="product-layout">
             <!-- Image Gallery -->
             <div class="product-images">
