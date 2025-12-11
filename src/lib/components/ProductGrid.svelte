@@ -1,3 +1,5 @@
+<!--Full Grid Component-->
+
 <script>
     import { goto } from '$app/navigation';
     
