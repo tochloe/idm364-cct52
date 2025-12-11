@@ -96,8 +96,11 @@
 <!-- Header stays the same -->
 <header class="header">
     <div class="container">
-        <div class="logo">re:treat</div>
-        <button class="cart-btn" onclick={toggleCart}>Cart (<span>{cartCount}</span>)</button>
+        <a href="/" class="logo">re:treat</a>
+       
+        <button class="cart-btn" onclick={toggleCart}>
+            Cart (<span>{cartCount}</span>)
+        </button>
     </div>
 </header>
 
@@ -120,7 +123,7 @@
     <!-- Content -->
     <div class="hero-content">
         <h1>Gear Up for Adventure</h1>
-        <p>Premium outdoor equipment for every journey</p>
+        <p>re:set. re:wear. re:treat.</p>
         <button class="btn btn-primary" onclick={() => navigateToProducts('all')}>Shop Now</button>
     </div>
     
@@ -147,10 +150,10 @@
                 <p>Footwear that can keep up</p>
             </div>
         </button>
-        <button class="category-card" onclick={() => navigateToProducts('bags')}>
+        <button class="category-card" onclick={() => navigateToProducts('backpacks')}>
             <img src={bags_pic} alt="Bags">
             <div class="category-info">
-                <h3>Bags</h3>
+                <h3>Backpacks</h3>
                 <p>Carry what you need in style</p>
             </div>
         </button>
@@ -187,10 +190,10 @@
         </button>
         <button 
             class="filter-btn" 
-            class:active={selectedCategory === 'bags'}
-            onclick={() => filterCategory('bags')}
+            class:active={selectedCategory === 'backpacks'}
+            onclick={() => filterCategory('backpacks')}
         >
-            Bags
+            Backpacks
         </button>
         <button 
             class="filter-btn" 
@@ -237,7 +240,7 @@
             <div class="footer-section">
                 <h4>Shop</h4>
                 <a href="#shoes">Shoes</a>
-                <a href="#bags">Bags</a>
+                <a href="#Backpacks">Backpacks</a>
                 <a href="#jackets">Jackets</a>
                 <a href="#accessories">Accessories</a>
             </div>
@@ -339,6 +342,7 @@ body {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--primary);
+    text-decoration: none;
 }
 
 .cart-btn {

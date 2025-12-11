@@ -4,7 +4,7 @@
 
 {#if loading}
     <div class="loading">
-        <p>Loading products...</p>
+        <p>loading...</p>
     </div>
 {:else if products.length === 0}
     <div class="no-products">

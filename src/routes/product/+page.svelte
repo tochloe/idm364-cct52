@@ -39,7 +39,7 @@
                 products = data;
                 console.log('Products loaded:', data);
                 if (data.length > 0) {
-                    console.log('Sample product fields:', Object.keys(data[0]));
+                    console.log('First product image path:', data[0].product_1);
                 }
             }
             loading = false;
@@ -48,7 +48,7 @@
 
     const filterOptions = [
         { value: 'shoes', label: 'Shoes' },
-        { value: 'bags', label: 'Bags' },
+        { value: 'backpacks', label: 'Backpacks' },
         { value: 'jackets', label: 'Jackets' },
         { value: 'accessories', label: 'Accessories' },
     ];
@@ -73,28 +73,26 @@
         cartDrawerOpen = false;
     }
 
-    // Helper function to get image URL
-    function getProductImage(product) {
-      
-        const imagePath = product.product_1 || product.hero_img;
-        if (!imagePath) return '/placeholder.jpg';
-        
-        
-         return `../img/${imagePath}`;
+   // COMPLETE function with all cases handled
+function getProductImage(product) {
+    const imagePath = product.product_1 || product.hero_img;
+    if (!imagePath) return '/placeholder.jpg';
+    
+    // If the path already starts with /img/, use it as-is
+    if (imagePath.startsWith('/img/')) {
+        return imagePath;
     }
+}
 
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
 
-    // Filter products based on category field or product_filters field
     let filteredProducts = $derived(
         selectedFilters.length === 0
             ? products
             : products.filter(product => {
-                // Try category field first
                 if (product.category) {
                     return selectedFilters.includes(product.category);
                 }
-                // Try product_filters field (if it's a comma-separated string)
                 if (product.product_filters) {
                     const filters = product.product_filters.toLowerCase().split(',').map(f => f.trim());
                     return selectedFilters.some(selected => filters.includes(selected));
@@ -103,7 +101,6 @@
             })
     );
 
-    // Sort products using correct field names
     let sortedProducts = $derived(
         [...filteredProducts].sort((a, b) => {
             switch(sortBy) {
