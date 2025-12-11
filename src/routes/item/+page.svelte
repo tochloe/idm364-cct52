@@ -307,6 +307,7 @@
     </div>
 </div>
 
+<!--WHY ISNT THIS ONE WORKING-->
 {#if cartDrawerOpen}
     <div class="cart-overlay" onclick={closeCart}></div>
 {/if}
@@ -318,15 +319,6 @@
     box-sizing: border-box;
 }
 
-:root {
-    --primary: #768e35;
-    --primary-hover: #5f7229;
-    --bg: #f7f7f7;
-    --white: #ffffff;
-    --text: #1a1a1a;
-    --text-muted: #666666;
-    --border: #e5e5e5;
-}
 
 
 
