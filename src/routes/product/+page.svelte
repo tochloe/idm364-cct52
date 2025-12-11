@@ -1,3 +1,4 @@
+<!--FILTER PAGE-->
 <script>
     import { page } from '$app/stores';
     import { supabase } from '$lib/supabase';
@@ -78,22 +79,21 @@
         cartDrawerOpen = false;
     }
 
-    function updateQuantity(itemId, delta) {
-        const index = cart.findIndex(item => item.id === itemId);
-        if (index > -1) {
-            cart[index].quantity += delta;
-            if (cart[index].quantity <= 0) {
-                cart = cart.filter(item => item.id !== itemId);
-            }
-            localStorage.setItem('retreat_cart', JSON.stringify(cart));
+    function updateQuantity(cartItemId, delta) {
+    const index = cart.findIndex(item => item.cartItemId === cartItemId);
+    if (index > -1) {
+        cart[index].quantity += delta;
+        if (cart[index].quantity <= 0) {
+            cart = cart.filter(item => item.cartItemId !== cartItemId);
         }
-    }
-    
-    function removeFromCart(itemId) {
-        cart = cart.filter(item => item.id !== itemId);
         localStorage.setItem('retreat_cart', JSON.stringify(cart));
     }
+}
 
+function removeFromCart(cartItemId) {
+    cart = cart.filter(item => item.cartItemId !== cartItemId);
+    localStorage.setItem('retreat_cart', JSON.stringify(cart));
+}
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
     let cartTotal = $derived(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0));
 
@@ -216,28 +216,29 @@
 
 <div class="cart-drawer" class:open={cartDrawerOpen}>
     <div class="cart-header">
-        <h3>Shopping Cart</h3>
+        <h3>🛒 Cart</h3>
         <button class="close-btn" onclick={closeCart}>✕</button>
     </div>
     <div class="cart-items">
         {#if cart.length === 0}
-            <p class="empty-cart">Your cart is empty</p>
+            <p class="empty-cart">Your cart is lonely☹️</p>
         {:else}
             {#each cart as item}
-                <div class="cart-item">
-                    <img src={item.image} alt={item.name}>
-                    <div class="cart-item-info">
-                        <h4>{item.name}</h4>
-                        <p class="cart-item-price">${item.price.toFixed(2)}</p>
-                        <div class="quantity-controls">
-                            <button onclick={() => updateQuantity(item.id, -1)}>−</button>
-                            <span>{item.quantity}</span>
-                            <button onclick={() => updateQuantity(item.id, 1)}>+</button>
-                        </div>
-                    </div>
-                    <button class="remove-btn" onclick={() => removeFromCart(item.id)}>✕</button>
-                </div>
-            {/each}
+    <div class="cart-item">
+        <img src={item.image} alt={item.name}>
+        <div class="cart-item-info">
+            <h4>{item.name}</h4>
+            <p class="cart-item-size">Size: {item.size}</p>
+            <p class="cart-item-price">${item.price.toFixed(2)}</p>
+            <div class="quantity-controls">
+                <button onclick={() => updateQuantity(item.cartItemId, -1)}>−</button>
+                <span>{item.quantity}</span>
+                <button onclick={() => updateQuantity(item.cartItemId, 1)}>+</button>
+            </div>
+        </div>
+        <button class="remove-btn" onclick={() => removeFromCart(item.cartItemId)}>✕</button>
+    </div>
+{/each}
         {/if}
     </div>
     <div class="cart-footer">
@@ -316,6 +317,36 @@
 
 .cart-btn:hover {
     background: var(--primary-hover);
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1rem;
+    flex: 1;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-full {
+    width: 100%;
 }
 
 /* Main Content */

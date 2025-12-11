@@ -1,5 +1,5 @@
+<!--ITEM PAGE-->
 <script>
-    import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { supabase } from "$lib/supabase";
     import '../../app.css';
@@ -14,29 +14,31 @@
     let cartDrawerOpen = $state(false);
     let currentImageIndex = $state(0);
     let saved = $state(false);
-    
-   
     let productId = $state(null);
+    let selectedSize = $state(null);
     
-    onMount(() => {
-        
+    // Load cart and product on mount
+    $effect(() => {
+        // Get product ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         productId = urlParams.get('id');
         
-        
+        // Load cart from localStorage
         const savedCart = localStorage.getItem('retreat_cart');
         if (savedCart) {
             cart = JSON.parse(savedCart);
         }
         
-    
+        // Load saved items
         const savedItems = localStorage.getItem('retreat_saved');
         if (savedItems) {
             const savedList = JSON.parse(savedItems);
             saved = savedList.includes(productId);
         }
-        
-        
+    });
+    
+    // Load product when productId changes
+    $effect(() => {
         if (productId) {
             loadProduct();
         }
@@ -54,34 +56,48 @@
             console.error('Error loading product:', error);
         } else {
             product = productData;
+            // Set default size if product has sizes
+            if (productData.product_sizes && productData.product_sizes !== 'One Size') {
+                const sizes = productData.product_sizes.split(',').map(s => s.trim());
+                selectedSize = sizes[0]; // Default to first size
+            } else {
+                selectedSize = 'One Size';
+            }
         }
         loading = false;
+    }
+    
+    function selectSize(size) {
+        selectedSize = size;
     }
     
     function addToCart() {
         if (!product) return;
         
+        const cartItemId = `${product.id}-${selectedSize}`;
         
-        const existingIndex = cart.findIndex(item => item.id === product.id);
+        const existingIndex = cart.findIndex(item => item.cartItemId === cartItemId);
         
         if (existingIndex > -1) {
-     
+            // Increase quantity
             cart[existingIndex].quantity += 1;
         } else {
-         
+            // Add new item
             cart = [...cart, {
+                cartItemId: cartItemId,
                 id: product.id,
                 name: product.product_name,
                 price: Number(product.product_price),
                 image: product.hero_img,
+                size: selectedSize,
                 quantity: 1
             }];
         }
         
-      
+
         localStorage.setItem('retreat_cart', JSON.stringify(cart));
         
-    
+
         cartDrawerOpen = true;
     }
     
@@ -103,19 +119,19 @@
         localStorage.setItem('retreat_saved', JSON.stringify(savedItems));
     }
     
-    function updateQuantity(itemId, delta) {
-        const index = cart.findIndex(item => item.id === itemId);
+    function updateQuantity(cartItemId, delta) {
+        const index = cart.findIndex(item => item.cartItemId === cartItemId);
         if (index > -1) {
             cart[index].quantity += delta;
             if (cart[index].quantity <= 0) {
-                cart = cart.filter(item => item.id !== itemId);
+                cart = cart.filter(item => item.cartItemId !== cartItemId);
             }
             localStorage.setItem('retreat_cart', JSON.stringify(cart));
         }
     }
     
-    function removeFromCart(itemId) {
-        cart = cart.filter(item => item.id !== itemId);
+    function removeFromCart(cartItemId) {
+        cart = cart.filter(item => item.cartItemId !== cartItemId);
         localStorage.setItem('retreat_cart', JSON.stringify(cart));
     }
     
@@ -131,26 +147,23 @@
         goto('/');
     }
     
-   
+    // Computed values
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
     let cartTotal = $derived(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0));
     
-   
+    // Get all product images from database columns
     let productImages = $derived(() => {
         if (!product) return [];
         const images = [];
         
-   
         if (product.hero_img) {
             images.push(product.hero_img);
         }
         
-     
         if (product.product_2) {
             images.push(product.product_2);
         }
         
-      
         if (product.product_1) {
             images.push(product.product_1);
         }
@@ -215,23 +228,28 @@
                 
                 <p class="product-description">{product.product_description || 'High-quality outdoor gear designed for adventure.'}</p>
                 
-                <div class="product-actions">
-                    
-                    <button class="btn btn-primary" onclick={addToCart}>
-                        Add to Bag
-                    </button>
-                </div>
-                
                 {#if product.product_sizes && product.product_sizes !== 'One Size'}
                     <div class="product-details">
-                        <h3>Available Sizes</h3>
+                        <h3>Select Size</h3>
                         <div class="size-options">
                             {#each product.product_sizes.split(',') as size}
-                                <button class="size-btn">{size.trim()}</button>
+                                <button 
+                                    class="size-btn" 
+                                    class:selected={selectedSize === size.trim()}
+                                    onclick={() => selectSize(size.trim())}
+                                >
+                                    {size.trim()}
+                                </button>
                             {/each}
                         </div>
                     </div>
                 {/if}
+                
+                <div class="product-actions">
+                    <button class="btn btn-primary" onclick={addToCart}>
+                        Add to Bag
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -251,27 +269,28 @@
 <!-- Cart Drawer -->
 <div class="cart-drawer" class:open={cartDrawerOpen}>
     <div class="cart-header">
-        <h3>Shopping Cart</h3>
+        <h3>🛒 Cart</h3>
         <button class="close-btn" onclick={closeCart}>✕</button>
     </div>
     
     <div class="cart-items">
         {#if cart.length === 0}
-            <p class="empty-cart">Your cart is empty</p>
+            <p class="empty-cart">Your cart is lonely☹️</p>
         {:else}
             {#each cart as item}
                 <div class="cart-item">
                     <img src={item.image} alt={item.name}>
                     <div class="cart-item-info">
                         <h4>{item.name}</h4>
+                        <p class="cart-item-size">Size: {item.size}</p>
                         <p class="cart-item-price">${item.price.toFixed(2)}</p>
                         <div class="quantity-controls">
-                            <button onclick={() => updateQuantity(item.id, -1)}>−</button>
+                            <button onclick={() => updateQuantity(item.cartItemId, -1)}>−</button>
                             <span>{item.quantity}</span>
-                            <button onclick={() => updateQuantity(item.id, 1)}>+</button>
+                            <button onclick={() => updateQuantity(item.cartItemId, 1)}>+</button>
                         </div>
                     </div>
-                    <button class="remove-btn" onclick={() => removeFromCart(item.id)}>✕</button>
+                    <button class="remove-btn" onclick={() => removeFromCart(item.cartItemId)}>✕</button>
                 </div>
             {/each}
         {/if}
@@ -307,12 +326,7 @@
     --border: #e5e5e5;
 }
 
-body {
-    font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-}
+
 
 .container {
     max-width: 1200px;
@@ -511,16 +525,56 @@ body {
     margin-bottom: 2rem;
 }
 
+.product-details {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+}
+
+.product-details h3 {
+    font-family: 'K2D', sans-serif;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+}
+
+/* Size Selection */
+.size-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.size-btn {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid var(--border);
+    background: var(--white);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    font-family: 'Kanit', sans-serif;
+}
+
+.size-btn:hover {
+    border-color: var(--primary);
+}
+
+.size-btn.selected {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
 .product-actions {
     display: flex;
     gap: 1rem;
-    margin-bottom: 2rem;
 }
 
 .btn {
     padding: 1rem 2rem;
     border: none;
-    border-radius: 50px;
+    border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
@@ -543,65 +597,8 @@ body {
     cursor: not-allowed;
 }
 
-
 .btn-full {
     width: 100%;
-}
-
-/*
-.product-details {
-    padding-top: 2rem;
-    border-top: 1px solid var(--border);
-    margin-top: 2rem;
-}
-
-.product-details h3 {
-    font-family: 'K2D', sans-serif;
-    margin-bottom: 1rem;
-    font-size: 1.25rem;
-}
-
-.product-details ul {
-    list-style: none;
-    padding: 0;
-}
-
-.product-details li {
-    padding: 0.5rem 0;
-    color: var(--text-muted);
-}
-
-.product-details li::before {
-    content: "• ";
-    color: var(--primary);
-    font-weight: bold;
-    margin-right: 0.5rem;
-} 
-
-*/
-
-/* Size Selection */
-.size-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.size-btn {
-    padding: 0.75rem 1.5rem;
-    border: 2px solid var(--border);
-    background: var(--white);
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.size-btn:hover,
-.size-btn.selected {
-    background: var(--primary);
-    color: var(--white);
-    border-color: var(--primary);
 }
 
 /* Cart Drawer */
@@ -665,8 +662,14 @@ body {
 }
 
 .cart-item-info h4 {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     font-size: 1rem;
+}
+
+.cart-item-size {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
 }
 
 .cart-item-price {

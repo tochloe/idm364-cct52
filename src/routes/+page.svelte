@@ -1,3 +1,5 @@
+<!--HOME PAGE-->
+
 <script>
     import { goto } from '$app/navigation';
     import { supabase } from "$lib/supabase";
@@ -75,21 +77,21 @@
         selectedCategory = category;
     }
     
-    function updateQuantity(itemId, delta) {
-        const index = cart.findIndex(item => item.id === itemId);
-        if (index > -1) {
-            cart[index].quantity += delta;
-            if (cart[index].quantity <= 0) {
-                cart = cart.filter(item => item.id !== itemId);
-            }
-            localStorage.setItem('retreat_cart', JSON.stringify(cart));
+    function updateQuantity(cartItemId, delta) {
+    const index = cart.findIndex(item => item.cartItemId === cartItemId);
+    if (index > -1) {
+        cart[index].quantity += delta;
+        if (cart[index].quantity <= 0) {
+            cart = cart.filter(item => item.cartItemId !== cartItemId);
         }
-    }
-    
-    function removeFromCart(itemId) {
-        cart = cart.filter(item => item.id !== itemId);
         localStorage.setItem('retreat_cart', JSON.stringify(cart));
     }
+}
+
+function removeFromCart(cartItemId) {
+    cart = cart.filter(item => item.cartItemId !== cartItemId);
+    localStorage.setItem('retreat_cart', JSON.stringify(cart));
+}
     
     let cartCount = $derived(cart.reduce((sum, item) => sum + item.quantity, 0));
     let cartTotal = $derived(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0));
@@ -202,7 +204,7 @@
             class:active={selectedCategory === 'all'}
             onclick={() => filterCategory('all')}
         >
-            All Products
+            Recently Added
         </button>
         <button 
             class="filter-btn" 
@@ -268,28 +270,29 @@
 
 <div id="cart-drawer" class="cart-drawer" class:open={cartDrawerOpen}>
     <div class="cart-header">
-        <h3>Shopping Cart</h3>
+        <h3>🛒 Cart</h3>
         <button class="close-btn" onclick={closeCart}>✕</button>
     </div>
     <div id="cart-items" class="cart-items">
         {#if cart.length === 0}
-            <p class="empty-cart">Your cart is empty</p>
+            <p class="empty-cart">Your cart is lonely☹️</p>
         {:else}
             {#each cart as item}
-                <div class="cart-item">
-                    <img src={item.image} alt={item.name}>
-                    <div class="cart-item-info">
-                        <h4>{item.name}</h4>
-                        <p class="cart-item-price">${item.price.toFixed(2)}</p>
-                        <div class="quantity-controls">
-                            <button onclick={() => updateQuantity(item.id, -1)}>−</button>
-                            <span>{item.quantity}</span>
-                            <button onclick={() => updateQuantity(item.id, 1)}>+</button>
-                        </div>
-                    </div>
-                    <button class="remove-btn" onclick={() => removeFromCart(item.id)}>✕</button>
-                </div>
-            {/each}
+    <div class="cart-item">
+        <img src={item.image} alt={item.name}>
+        <div class="cart-item-info">
+            <h4>{item.name}</h4>
+            <p class="cart-item-size">Size: {item.size}</p>
+            <p class="cart-item-price">${item.price.toFixed(2)}</p>
+            <div class="quantity-controls">
+                <button onclick={() => updateQuantity(item.cartItemId, -1)}>−</button>
+                <span>{item.quantity}</span>
+                <button onclick={() => updateQuantity(item.cartItemId, 1)}>+</button>
+            </div>
+        </div>
+        <button class="remove-btn" onclick={() => removeFromCart(item.cartItemId)}>✕</button>
+    </div>
+{/each}
         {/if}
     </div>
     <div class="cart-footer">
@@ -514,6 +517,12 @@ body {
     border-radius: 8px;
 }
 
+.cart-item-size {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
 .cart-item-info {
     flex: 1;
 }
@@ -569,34 +578,34 @@ body {
 }
 /* Buttons */
 .btn {
-    padding: 0.75rem 2rem;
+    padding: 1rem 2rem;
     border: none;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
     font-size: 1rem;
+    flex: 1;
 }
 
 .btn-primary {
-    background: var(--white);
-    color: var(--primary);
+    background: var(--primary);
+    color: var(--white);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-.btn-secondary {
-    background: var(--white);
-    color: var(--primary);
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-full {
     width: 100%;
 }
-
 /* Categories Section */
 .categories {
     padding: 5rem 0;
