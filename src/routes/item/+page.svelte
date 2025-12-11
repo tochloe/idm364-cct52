@@ -188,12 +188,14 @@
     </div>
 {:else if product}
     <div class="product-detail">
-        <button class="back-btn" onclick={goBack}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </button>
-        
+<button class="back-btn" onclick={goBack} aria-label="Go back" title="Go back">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <!-- Optional: visually hidden text (for localization or if you prefer explicit visible text for screen readers) -->
+    <span class="sr-only">Go back</span>
+</button>
+// ...existing code...
         <div class="product-layout">
             <!-- Image Gallery -->
             <div class="product-images">
@@ -752,6 +754,18 @@
     padding: 2rem 0;
     margin-top: 5rem;
     text-align: center;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 /* Responsive */
