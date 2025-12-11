@@ -16,7 +16,7 @@
     let modalOpen = $state(false);
     let cart = $state([]);
     
-    // Load cart from localStorage on mount
+   
     $effect(() => {
         const savedCart = localStorage.getItem('retreat_cart');
         if (savedCart) {
@@ -24,7 +24,7 @@
         }
     });
     
-    // Carousel
+    // Carousel Add-on
     let currentSlide = $state(0);
     
     import hero1 from '$lib/img/header/slide1.jpg';
@@ -238,7 +238,7 @@ function removeFromCart(cartItemId) {
 
     <ProductGrid products={previewProducts} {loading} />
     
-    <!-- more than 2 items:-->
+    <!-- more than 2 items add-on-->
     {#if filteredProducts.length > 2}
         <div style="text-align: center; margin-top: 2rem;">
             <button class="btn btn-secondary" onclick={() => navigateToProducts(selectedCategory)}>
@@ -304,6 +304,7 @@ function removeFromCart(cartItemId) {
     </div>
 </div>
 
+
 {#if cartDrawerOpen}
     <div id="cart-overlay" class="cart-overlay visible" onclick={closeCart}></div>
 {/if}
@@ -337,12 +338,7 @@ function removeFromCart(cartItemId) {
     --border: #e5e5e5;
 }
 
-body {
-    font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-}
+
 
 .container {
     max-width: 1200px;
