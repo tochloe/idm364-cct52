@@ -264,7 +264,7 @@
 
 <footer class="footer">
     <div class="container">
-        <p>re:treat 2025 | IDM341_CCT52</p>
+        <p>re:treat 2025 | IDM364_CCT52</p>
     </div>
 </footer>
 
