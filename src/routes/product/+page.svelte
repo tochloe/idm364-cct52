@@ -11,7 +11,6 @@
     let cart = $state([]);
     let loading = $state(true);
 
-    // Load cart from localStorage
     $effect(() => {
         const savedCart = localStorage.getItem('retreat_cart');
         if (savedCart) {
@@ -27,7 +26,7 @@
                 .join(' & ')
     );
 
-    // Initialize filters from URL parameter
+  
     $effect(() => {
         const filterParam = $page.url.searchParams.get('filter');
         console.log('Filter from URL:', filterParam);
@@ -38,7 +37,7 @@
         }
     });
 
-    // Load products from Supabase
+ 
     $effect(() => {
         loading = true;
         supabase.from("allproducts").select("*").then(({ data, error }) => {
@@ -214,7 +213,7 @@
     </div>
 </div>
 
-<!-- Cart Drawer -->
+
 <div class="cart-drawer" class:open={cartDrawerOpen}>
     <div class="cart-header">
         <h3>Shopping Cart</h3>
