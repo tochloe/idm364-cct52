@@ -7,7 +7,6 @@
     import ProductGrid from '$lib/components/ProductGrid.svelte';
 
     let {data} = $props(); 
-    $inspect(data);
 
     let products = $state([]);
     let loading = $state(true);
